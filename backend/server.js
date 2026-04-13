@@ -8,31 +8,40 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS (allow frontend)
+// ✅ CORS (allow your frontend)
 app.use(cors({
-  origin: "*"
+  origin: "*",
+  methods: ["GET", "POST"]
 }));
 
-app.use(express.json());
+// ✅ Increase payload limit (IMPORTANT for images)
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 console.log("🚀 Backend Started");
 
-// Multer
+// ✅ Multer (with file size limit)
 const upload = multer({
   storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
-// Test route
+// ✅ Test route
 app.get("/", (req, res) => {
   res.send("✅ Capify Backend Running");
 });
 
-// Main API
+// ✅ Main API
 app.post("/generate", upload.single("image"), async (req, res) => {
   try {
+    console.log("📩 Request received");
+
     if (!req.file) {
+      console.log("❌ No file received");
       return res.status(400).json({ error: "No image uploaded" });
     }
+
+    console.log("📸 File:", req.file.originalname);
 
     const base64Image = req.file.buffer.toString("base64");
 
@@ -85,11 +94,13 @@ Hashtags:
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Gemini Error:", data);
+      console.error("❌ Gemini Error:", data);
       return res.status(500).json({
         error: data.error?.message || "Gemini failed"
       });
     }
+
+    console.log("✅ Gemini response received");
 
     const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -97,10 +108,11 @@ Hashtags:
     res.json({ result: text });
 
   } catch (err) {
-    console.error("Server Error:", err);
+    console.error("❌ Server Error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on ${PORT}`));

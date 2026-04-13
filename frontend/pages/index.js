@@ -22,10 +22,17 @@ export default function Home() {
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  // ✅ fallback if env fails
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://caapify-backend.onrender.com";
 
   const onDrop = (files) => {
     const file = files[0];
+    if (!file) return;
+
+    console.log("📸 Selected file:", file);
+
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
@@ -36,7 +43,12 @@ export default function Home() {
   });
 
   const generate = async () => {
-    if (!image) return alert("Upload image first");
+    if (!image) {
+      alert("Upload image first");
+      return;
+    }
+
+    console.log("🚀 Sending request to backend...");
 
     setLoading(true);
     setResult("");
@@ -50,9 +62,18 @@ export default function Home() {
         body: formData
       });
 
+      console.log("📡 Response status:", res.status);
+
       const data = await res.json();
+      console.log("📦 Response data:", data);
+
+      if (!res.ok) {
+        throw new Error(data.error || "API failed");
+      }
+
       setResult(data.result || "");
-    } catch {
+    } catch (err) {
+      console.error("❌ Frontend Error:", err);
       setResult("Error generating content");
     }
 
@@ -65,12 +86,14 @@ export default function Home() {
   let hashtags = "";
 
   if (result && result.includes("Songs:") && result.includes("Hashtags:")) {
-    captions = result.split("Songs:")[0]
+    captions = result
+      .split("Songs:")[0]
       .replace("Captions:", "")
       .trim()
       .split("\n");
 
-    songs = result.split("Songs:")[1]
+    songs = result
+      .split("Songs:")[1]
       .split("Hashtags:")[0]
       .trim()
       .split("\n");
@@ -82,7 +105,6 @@ export default function Home() {
 
   return (
     <div style={styles.container}>
-
       <Canvas style={styles.canvas}>
         <ambientLight />
         <FloatingShape />
@@ -153,7 +175,8 @@ const styles = {
     padding: 10,
     background: "#00adb5",
     border: "none",
-    color: "white"
+    color: "white",
+    cursor: "pointer"
   },
   results: { marginTop: 20 },
   card: {

@@ -22,10 +22,8 @@ export default function Home() {
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ fallback if env fails
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://caapify-backend.onrender.com";
+  // ✅ API URL (from Vercel env)
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const onDrop = (files) => {
     const file = files[0];
@@ -42,30 +40,31 @@ export default function Home() {
     onDrop
   });
 
+  // ✅ UPDATED GENERATE FUNCTION (FIXED)
   const generate = async () => {
     if (!image) {
       alert("Upload image first");
       return;
     }
 
-    console.log("🚀 Sending request to backend...");
-
     setLoading(true);
     setResult("");
 
-    const formData = new FormData();
-    formData.append("image", image);
-
     try {
+      console.log("🚀 Sending request to:", `${API_URL}/generate`);
+
+      const formData = new FormData();
+      formData.append("image", image);
+
       const res = await fetch(`${API_URL}/generate`, {
         method: "POST",
         body: formData
       });
 
-      console.log("📡 Response status:", res.status);
+      console.log("📡 Status:", res.status);
 
       const data = await res.json();
-      console.log("📦 Response data:", data);
+      console.log("📦 Response:", data);
 
       if (!res.ok) {
         throw new Error(data.error || "API failed");
@@ -73,7 +72,7 @@ export default function Home() {
 
       setResult(data.result || "");
     } catch (err) {
-      console.error("❌ Frontend Error:", err);
+      console.error("❌ Error:", err);
       setResult("Error generating content");
     }
 

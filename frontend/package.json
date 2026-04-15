@@ -16,5 +16,10 @@
     "react-dom": "^18",
     "react-dropzone": "^15.0.0",
     "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
   }
 }

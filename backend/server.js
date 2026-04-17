@@ -15,19 +15,22 @@ app.use(cors({
   methods: ["GET", "POST"]
 }));
 
-// ✅ Allow large payload
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+// ✅ Body limits
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ limit: "25mb", extended: true }));
 
 console.log("🚀 Backend Started");
 
-// ✅ Multer (allow large file but controlled)
+// ✅ Multer (max 15MB upload)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 } // 20MB max
+  limits: { fileSize: 15 * 1024 * 1024 }
 });
 
-// ✅ Test route
+// ✅ Rate limit (simple)
+let lastRequestTime = 0;
+
+// ✅ Health route
 app.get("/", (req, res) => {
   res.send("✅ Capify Backend Running");
 });
@@ -37,32 +40,41 @@ app.post("/generate", upload.single("image"), async (req, res) => {
   try {
     console.log("📩 API HIT");
 
+    // 🔥 RATE LIMIT
+    const now = Date.now();
+    if (now - lastRequestTime < 3000) {
+      return res.status(429).json({
+        error: "Too many requests. Wait 3 seconds."
+      });
+    }
+    lastRequestTime = now;
+
     if (!req.file) {
       return res.status(400).json({ error: "No image uploaded" });
     }
 
-    console.log("📸 Original size:", (req.file.size / 1024 / 1024).toFixed(2), "MB");
+    console.log("📸 Original size:", req.file.size);
 
-    // 🔥 STEP 1: COMPRESS IMAGE (CRITICAL)
+    // ✅ SMART IMAGE OPTIMIZATION
     const compressedBuffer = await sharp(req.file.buffer)
+      .rotate() // fix orientation
       .resize({
-        width: 1024,
+        width: 768, // 🔥 BEST BALANCE
         withoutEnlargement: true
       })
-      .jpeg({ quality: 70 }) // balance quality + size
+      .jpeg({
+        quality: 55, // 🔥 reduce size a lot
+        mozjpeg: true
+      })
       .toBuffer();
 
-    console.log("📦 Compressed size:", (compressedBuffer.length / 1024 / 1024).toFixed(2), "MB");
+    console.log("📦 Compressed size:", compressedBuffer.length);
 
     const base64Image = compressedBuffer.toString("base64");
 
-    // 🔥 STEP 2: TIMEOUT PROTECTION
+    // ✅ TIMEOUT CONTROL
     const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 25000); // 25 sec timeout
-
-    console.log("🚀 Sending to Gemini...");
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -71,6 +83,7 @@ app.post("/generate", upload.single("image"), async (req, res) => {
         headers: {
           "Content-Type": "application/json"
         },
+        signal: controller.signal,
         body: JSON.stringify({
           contents: [
             {
@@ -106,8 +119,7 @@ Hashtags:
               ]
             }
           ]
-        }),
-        signal: controller.signal
+        })
       }
     );
 
@@ -115,27 +127,28 @@ Hashtags:
 
     const data = await response.json();
 
-    console.log("📡 Gemini status:", response.status);
-
     if (!response.ok) {
       console.error("❌ Gemini Error:", data);
+
       return res.status(500).json({
         error: data.error?.message || "Gemini failed"
       });
     }
 
+    console.log("✅ Gemini success");
+
     const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    console.log("✅ Success");
 
     res.json({ result: text });
 
   } catch (err) {
-    console.error("🔥 Server Crash:", err.message);
+    console.error("🔥 Server Error:", err);
 
     if (err.name === "AbortError") {
-      return res.status(500).json({ error: "Request timeout (try smaller image)" });
+      return res.status(500).json({
+        error: "Request timeout (try smaller image)"
+      });
     }
 
     res.status(500).json({ error: "Server error" });
@@ -147,7 +160,9 @@ app.use((err, req, res, next) => {
   console.error("🔥 Global Error:", err);
 
   if (err.code === "LIMIT_FILE_SIZE") {
-    return res.status(400).json({ error: "Image too large (max 20MB)" });
+    return res.status(400).json({
+      error: "Image too large (max 15MB)"
+    });
   }
 
   res.status(500).json({ error: "Server crashed" });

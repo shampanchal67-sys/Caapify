@@ -21,10 +21,10 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 console.log("🚀 Backend Started");
 
-// ✅ Multer (allow large file)
+// ✅ Multer (allow large file but controlled)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 } // 20MB upload allowed
+  limits: { fileSize: 20 * 1024 * 1024 } // 20MB max
 });
 
 // ✅ Test route
@@ -41,17 +41,28 @@ app.post("/generate", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "No image uploaded" });
     }
 
-    console.log("📸 Original size:", req.file.size);
+    console.log("📸 Original size:", (req.file.size / 1024 / 1024).toFixed(2), "MB");
 
-    // 🔥 COMPRESS IMAGE (key step)
+    // 🔥 STEP 1: COMPRESS IMAGE (CRITICAL)
     const compressedBuffer = await sharp(req.file.buffer)
-      .resize({ width: 1024 }) // keep quality but reduce size
-      .jpeg({ quality: 80 })   // compress
+      .resize({
+        width: 1024,
+        withoutEnlargement: true
+      })
+      .jpeg({ quality: 70 }) // balance quality + size
       .toBuffer();
 
-    console.log("📦 Compressed size:", compressedBuffer.length);
+    console.log("📦 Compressed size:", (compressedBuffer.length / 1024 / 1024).toFixed(2), "MB");
 
     const base64Image = compressedBuffer.toString("base64");
+
+    // 🔥 STEP 2: TIMEOUT PROTECTION
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 25000); // 25 sec timeout
+
+    console.log("🚀 Sending to Gemini...");
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -95,11 +106,16 @@ Hashtags:
               ]
             }
           ]
-        })
+        }),
+        signal: controller.signal
       }
     );
 
+    clearTimeout(timeout);
+
     const data = await response.json();
+
+    console.log("📡 Gemini status:", response.status);
 
     if (!response.ok) {
       console.error("❌ Gemini Error:", data);
@@ -108,15 +124,20 @@ Hashtags:
       });
     }
 
-    console.log("✅ Gemini success");
-
     const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    console.log("✅ Success");
 
     res.json({ result: text });
 
   } catch (err) {
-    console.error("🔥 Server Crash:", err);
+    console.error("🔥 Server Crash:", err.message);
+
+    if (err.name === "AbortError") {
+      return res.status(500).json({ error: "Request timeout (try smaller image)" });
+    }
+
     res.status(500).json({ error: "Server error" });
   }
 });

@@ -12,10 +12,10 @@ export default function App({ Component, pageProps }) {
           crossOrigin="anonymous"
         ></script>
 
-        {/* ✅ Impact Verification */}
+        {/* ✅ Impact Verification (UPDATED FORMAT) */}
         <meta
-          name="Impact-Site-Verification"
-          content="16ee40fc-8d3b-4f9f-8174-81d70d7083d4"
+          name="impact-site-verification"
+          value="16ee40fc-8d3b-4f9f-8174-81d70d7083d4"
         />
       </Head>
 

@@ -176,8 +176,7 @@ export default function Contact() {
                       </div>
                       <div>
                         <h3 className="font-bold text-white mb-1">Email</h3>
-                        <p className="text-white/70">support@caapify.com</p>
-                        <p className="text-white/70">business@caapify.com</p>
+                        <p className="text-white/70">shampanchal66@gmail.com</p>
                       </div>
                     </div>
 

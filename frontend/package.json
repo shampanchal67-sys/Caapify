@@ -1,25 +1,36 @@
 {
-  "name": "capify-frontend",
-  "version": "0.1.0",
+  "name": "caapify",
+  "version": "2.0.0",
+  "description": "AI-powered social media content generator with premium UI",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "@react-three/drei": "^9.122.0",
-    "@react-three/fiber": "^8.18.0",
-    "framer-motion": "^12.38.0",
-    "next": "14.2.3",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-dropzone": "^15.0.0",
-    "three": "^0.183.2"
+    "next": "^14.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "framer-motion": "^11.0.3",
+    "react-dropzone": "^14.2.3",
+    "@react-three/fiber": "^8.15.16",
+    "@react-three/drei": "^9.96.1",
+    "three": "^0.161.0"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.0",
-    "autoprefixer": "^10.4.0"
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/three": "^0.161.0",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

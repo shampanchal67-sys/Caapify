@@ -185,7 +185,7 @@ export default function Terms() {
                   If you have any questions about these Terms, please contact us:
                 </p>
                 <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                  <p>Email: legal@caapify.com</p>
+                  <p>Email: shampanchal66@gmail.com</p>
                   <p className="mt-2">
                     Or visit our{" "}
                     <Link href="/contact" className="text-cyan-400 hover:text-cyan-300 underline">

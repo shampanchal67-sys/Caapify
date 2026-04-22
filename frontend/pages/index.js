@@ -4,41 +4,70 @@ import { useDropzone } from "react-dropzone";
 import { Canvas } from "@react-three/fiber";
 import { Float } from "@react-three/drei";
 import Link from "next/link";
+import { products } from "./_app";
 
-// Ad Banner Component - INSERT YOUR ADSENSE CODE HERE
-// Replace the placeholder with your actual AdSense code from Google
-function AdBanner({ slot = "top", format = "horizontal" }) {
-  // ⚠️ IMPORTANT: After getting AdSense approval, add useEffect here:
-  // useEffect(() => {
-  //   try {
-  //     (window.adsbygoogle = window.adsbygoogle || []).push({});
-  //   } catch (err) {
-  //     console.error('AdSense error:', err);
-  //   }
-  // }, []);
+// Affiliate Products Component
+function AffiliateProducts({ title = "Recommended Products", count = 3, placement = "top" }) {
+  // Shuffle and get random products
+  const shuffled = [...products].sort(() => 0.5 - Math.random());
+  const displayProducts = shuffled.slice(0, count);
 
   return (
-    <div className="w-full flex items-center justify-center my-4">
-      <div className="max-w-[728px] w-full min-h-[90px] bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 flex items-center justify-center">
-        {/* 
-        ⬇️ REPLACE THIS ENTIRE DIV WITH YOUR ADSENSE CODE ⬇️
-        
-        After AdSense approval, replace everything inside this return statement with:
-        
-        <ins 
-          className="adsbygoogle"
-          style={{ display: "block" }}
-          data-ad-client="ca-pub-XXXXXXXXXX"
-          data-ad-slot="YYYYYYYYYY"
-          data-ad-format={format}
-          data-full-width-responsive="true"
-        ></ins>
-        
-        Get your:
-        - data-ad-client from AdSense Account settings
-        - data-ad-slot from each Ad Unit you create (different for each placement)
-        */}
-        <span className="text-white/40 text-sm">Advertisement - {slot}</span>
+    <div className="w-full max-w-6xl mx-auto px-4 my-8">
+      <div className="relative rounded-2xl p-1 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20">
+        <div className="bg-slate-900/90 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+          <h3 className="text-xl font-bold mb-4 text-center bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+            ✨ {title}
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {displayProducts.map((product, index) => (
+              <motion.a
+                key={index}
+                href={product.link}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ scale: 1.05 }}
+                className="group relative bg-white/5 rounded-xl p-4 border border-white/10 hover:border-cyan-500/50 transition-all"
+              >
+                <div className="aspect-square relative mb-3 overflow-hidden rounded-lg bg-white/10">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform"
+                  />
+                </div>
+                
+                <h4 className="font-bold text-white mb-1 text-sm">{product.name}</h4>
+                {product.description && (
+                  <p className="text-white/60 text-xs mb-3 line-clamp-2">{product.description}</p>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-cyan-400 font-medium">{product.category}</span>
+                  <span className="text-xs text-white/80 group-hover:text-cyan-400 transition-colors flex items-center gap-1">
+                    View
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </div>
+
+                {/* Badge */}
+                <div className="absolute top-2 right-2 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                  Amazon
+                </div>
+              </motion.a>
+            ))}
+          </div>
+
+          <p className="text-center text-white/40 text-xs mt-4">
+            💡 Recommended tools for content creators
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -276,8 +305,8 @@ export default function Home() {
         {/* Navbar */}
         <Navbar />
 
-        {/* Ad Space - Top Banner */}
-        <AdBanner slot="top-banner" format="horizontal" />
+        {/* Affiliate Products - Top Section */}
+        <AffiliateProducts title="Content Creator Essentials" count={3} placement="top" />
 
         {/* Hero Section */}
         <motion.div
@@ -536,8 +565,10 @@ export default function Home() {
                   </div>
                 </motion.div>
 
-                {/* Ad Space - Between Results */}
-                <AdBanner slot="middle-content" format="horizontal" />
+                {/* Affiliate Products - Middle Section */}
+                <div className="my-8">
+                  <AffiliateProducts title="Upgrade Your Setup" count={3} placement="middle" />
+                </div>
 
                 {/* Songs Card */}
                 <motion.div
@@ -616,9 +647,9 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Ad Space - Bottom */}
+        {/* Affiliate Products - Bottom Section */}
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <AdBanner slot="bottom-content" format="horizontal" />
+          <AffiliateProducts title="Popular Among Creators" count={6} placement="bottom" />
         </div>
 
         {/* Footer */}
